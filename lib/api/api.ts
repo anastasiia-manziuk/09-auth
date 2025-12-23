@@ -6,7 +6,7 @@ export interface NotesResponse {
   totalPages: number;
 }
 
-const BASE_URL = 'https://notehub-public.goit.study/api';
+const BASE_URL = 'https://notehub-api.goit.study/auth/register';
 const TOKEN = process.env.NEXT_PUBLIC_NOTEHUB_TOKEN;
 
 export const fetchNotes = async (
