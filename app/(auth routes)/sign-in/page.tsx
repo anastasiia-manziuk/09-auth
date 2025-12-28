@@ -4,27 +4,34 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import css from './SignInPage.module.css';
 
-import { login } from '@/lib/api/clientApi';
+import { login, getMe } from '@/lib/api/clientApi';
+import { useAuthStore } from '@/lib/store/authStore';
 
 export default function SignInPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const setUser = useAuthStore(state => state.setUser);
 
   const handleSubmit = async (formData: FormData) => {
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
 
-    try {
-      setIsLoading(true);
-      await login({ email, password });
-      router.push('/profile');
-    } catch {
-  setError('Invalid email or password');
-} finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    setIsLoading(true);
+
+    await login({ email, password });
+
+    const user = await getMe();
+    setUser(user);
+
+    router.push('/profile');
+  } catch {
+    setError('Invalid email or password');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <main className={css.mainContent}>
