@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '@/app/notes/LayoutNotes.module.css';
+import styles from '@/app/(private routes)/profile/notes/LayoutNotes.module.css';
 
 interface Props {
   children: React.ReactNode;
