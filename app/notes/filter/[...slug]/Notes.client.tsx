@@ -9,8 +9,8 @@ import css from './Notes.module.css';
 import NoteList from '@/components/NoteList/NoteList';
 import SearchBox from '@/components/SearchBox/SearchBox';
 import Pagination from '@/components/Pagination/Pagination';
-import { fetchNotes } from '@/lib/api/api';
-import type { NotesResponse } from '@/lib/api/api';
+import { fetchNotes } from '@/lib/api/clientApi';
+import type { NotesResponse } from '@/lib/api/clientApi';
 import Link from 'next/link';
 
 export type NotesClientProps = {
