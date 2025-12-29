@@ -7,11 +7,12 @@ const authRoutes = ['/sign-in', '/sign-up'];
 const privateRoutes = ['/profile', '/notes'];
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
   const cookieStore = await cookies();
 
-  const accessToken = cookieStore.get('accessToken');
-  const refreshToken = cookieStore.get('refreshToken');
+  const accessToken = cookieStore.get('accessToken')?.value;
+  const refreshToken = cookieStore.get('refreshToken')?.value;
+
+  const { pathname } = request.nextUrl;
 
   const isPrivateRoute = privateRoutes.some(route =>
     pathname.startsWith(route)
@@ -21,42 +22,50 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  if (!accessToken && refreshToken) {
-    try {
-      const response = await checkSession();
+  if (isPrivateRoute && !accessToken) {
+    if (refreshToken) {
+      try {
+        const response = await checkSession();
+        const setCookie = response.headers['set-cookie'];
 
-      const setCookie = response.headers?.['set-cookie'];
+        if (setCookie) {
+          const cookieArray = Array.isArray(setCookie)
+            ? setCookie
+            : [setCookie];
 
-      if (setCookie) {
-        const cookieArray = Array.isArray(setCookie)
-          ? setCookie
-          : [setCookie];
+          for (const cookieStr of cookieArray) {
+            const parsed = parse(cookieStr);
+            const options = {
+              expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
+              path: parsed.Path,
+              maxAge: parsed['Max-Age']
+                ? Number(parsed['Max-Age'])
+                : undefined,
+            };
 
+            if (parsed.accessToken) {
+              cookieStore.set('accessToken', parsed.accessToken, options);
+            }
 
-        for (const cookie of cookieArray) {
-          const parsed = parse(cookie);
-
-          if (parsed.accessToken) {
-            cookieStore.set('accessToken', parsed.accessToken);
+            if (parsed.refreshToken) {
+              cookieStore.set('refreshToken', parsed.refreshToken, options);
+            }
           }
-
-          if (parsed.refreshToken) {
-            cookieStore.set('refreshToken', parsed.refreshToken);
-          }
+          return NextResponse.next({
+            headers: {
+              Cookie: cookieStore.toString(),
+            },
+          });
         }
-      }
-    } catch {
-      if (isPrivateRoute) {
+      } catch {
         return NextResponse.redirect(new URL('/sign-in', request.url));
       }
     }
-  }
 
-  if (isPrivateRoute && !cookieStore.get('accessToken')) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  if (isAuthRoute && cookieStore.get('accessToken')) {
+  if (isAuthRoute && accessToken) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
