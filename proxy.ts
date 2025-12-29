@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { checkSession } from '@/lib/api/serverApi';
 
 const authRoutes = ['/sign-in', '/sign-up'];
@@ -15,27 +16,26 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  const accessToken = request.cookies.get('accessToken');
-  const refreshToken = request.cookies.get('refreshToken');
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('accessToken');
+  const refreshToken = cookieStore.get('refreshToken');
 
-  let isAuthenticated = Boolean(accessToken);
 
-  // 🔹 Поновлення сесії через refreshToken
   if (!accessToken && refreshToken) {
     try {
       await checkSession();
-      isAuthenticated = true;
     } catch {
-      isAuthenticated = false;
+      if (isPrivateRoute) {
+        return NextResponse.redirect(new URL('/sign-in', request.url));
+      }
     }
   }
 
-  if (isPrivateRoute && !isAuthenticated) {
+  if (isPrivateRoute && !accessToken) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
- 
-  if (isAuthRoute && isAuthenticated) {
+  if (isAuthRoute && accessToken) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 

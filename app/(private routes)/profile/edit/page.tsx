@@ -38,9 +38,9 @@ export default function ProfileEditPage() {
     }
   };
 
-  const handleCancel = () => {
-    router.push('/profile');
-  };
+const handleCancel = () => {
+  router.back();
+};
 
   return (
     <main className={css.mainContent}>
