@@ -1,4 +1,3 @@
-
 import { api } from './api';
 import { User } from '@/types/user';
 import type { Note, CreateNoteData } from '@/types/note';
@@ -7,8 +6,6 @@ export interface NotesResponse {
   notes: Note[];
   totalPages: number;
 }
-
-
 
 export async function checkSession(): Promise<boolean> {
   try {
@@ -30,8 +27,12 @@ export async function login({
 }: {
   email: string;
   password: string;
-}): Promise<void> {
-  await api.post('/auth/login', { email, password });
+}): Promise<User> {
+  const { data } = await api.post<User>('/auth/login', {
+    email,
+    password,
+  });
+  return data;
 }
 
 export async function register({
@@ -40,8 +41,12 @@ export async function register({
 }: {
   email: string;
   password: string;
-}): Promise<void> {
-  await api.post('/auth/register', { email, password });
+}): Promise<User> {
+  const { data } = await api.post<User>('/auth/register', {
+    email,
+    password,
+  });
+  return data;
 }
 
 export async function logout(): Promise<void> {
@@ -54,7 +59,6 @@ export async function updateMe(username: string): Promise<User> {
   });
   return data;
 }
-
 
 /* ---------- NOTES ---------- */
 
@@ -85,4 +89,3 @@ export async function deleteNote(id: Note['id']): Promise<Note> {
   const res = await api.delete<Note>(`/notes/${id}`);
   return res.data;
 }
-
